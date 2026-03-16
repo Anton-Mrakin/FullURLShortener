@@ -84,15 +84,30 @@ class UrlShortenerIntegrationTest {
         // Perform some actions to generate metrics
         testShortenAndRetrieveUrl();
 
-        // Verify metrics
+        // 1. Verify health probes
+        mockMvc.perform(get("/actuator/health/liveness"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"status\":\"UP\"")));
+
+        mockMvc.perform(get("/actuator/health/readiness"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"status\":\"UP\"")));
+
+        // 2. Verify Prometheus metrics
         MvcResult result = mockMvc.perform(get("/actuator/prometheus"))
                 .andExpect(status().isOk())
                 .andReturn();
         
         String content = result.getResponse().getContentAsString();
-        
-        // Let's check for anything related to our app
-        assertTrue(content.contains("url"), "Prometheus should contain 'url' metrics. Content: " + content);
+
+        // Check for our custom metrics.
+        // Micrometer appends _total to counters. Gauge names are usually preserved with underscores.
+        assertTrue(content.contains("url_shorten_requests"), "Missing url_shorten_requests metric");
+        assertTrue(content.contains("url_get_requests"), "Missing url_get_requests metric");
+        assertTrue(content.contains("url_count"), "Missing url_count gauge metric.");
+
+        // Verify standard metrics
+        assertTrue(content.contains("jvm_memory_used_bytes"), "Missing JVM metrics");
     }
 
     @Value("${app.test.threads:100}")
@@ -134,7 +149,7 @@ class UrlShortenerIntegrationTest {
         CopyOnWriteArrayList<String> shortCodes = new CopyOnWriteArrayList<>();
 
         // 1. Initial data for reading
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             String url = "https://initial.com/" + i + "_" + UUID.randomUUID();
             MvcResult result = mockMvc.perform(post("/api/v1/urls/shorten")
                             .contentType(MediaType.TEXT_PLAIN)

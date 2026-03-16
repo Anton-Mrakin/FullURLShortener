@@ -35,6 +35,18 @@ management:
       export:
         enabled: true
 
+resilience4j:
+  retry:
+    retry-aspect-order: 1
+    instances:
+      dbRetry:
+        max-attempts: 10
+        wait-duration: 50ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.orm.ObjectOptimisticLockingFailureException
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n"

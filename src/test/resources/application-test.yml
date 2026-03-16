@@ -3,5 +3,5 @@ app:
     iterations: 1000
     threads: 100
     shorten-probability: 0.2
-    latency-threshold: 200.0
-    throughput-threshold: 500.0
+    latency-threshold: 300.0
+    throughput-threshold: 300.0

@@ -10,8 +10,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,9 +32,7 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
 
     @Override
     @Transactional
-    @Retryable(value = ObjectOptimisticLockingFailureException.class, 
-               maxAttempts = 10, 
-               backoff = @Backoff(delay = 50, multiplier = 2))
+    @Retry(name = "dbRetry")
     public Optional<Url> findByShortCode(String shortCode) {
         return jpaUrlRepository.findByShortCode(shortCode)
                 .map(entity -> {
@@ -47,9 +44,7 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
 
     @Override
     @Transactional
-    @Retryable(value = ObjectOptimisticLockingFailureException.class, 
-               maxAttempts = 10, 
-               backoff = @Backoff(delay = 50, multiplier = 2))
+    @Retry(name = "dbRetry")
     public Optional<Url> findByOriginalUrl(String originalUrl) {
         return jpaUrlRepository.findByOriginalUrl(originalUrl)
                 .map(entity -> {
@@ -73,9 +68,7 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
 
     @Override
     @Transactional
-    @Retryable(value = ObjectOptimisticLockingFailureException.class, 
-               maxAttempts = 10, 
-               backoff = @Backoff(delay = 50, multiplier = 2))
+    @Retry(name = "dbRetry")
     public void updateLastAccessed(String shortCode) {
         jpaUrlRepository.findByShortCode(shortCode)
                 .ifPresent(entity -> {

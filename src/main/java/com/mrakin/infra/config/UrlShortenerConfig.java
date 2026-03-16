@@ -8,11 +8,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
-@EnableRetry(order = 1)
 @EnableTransactionManagement(order = 100)
 public class UrlShortenerConfig {
 
