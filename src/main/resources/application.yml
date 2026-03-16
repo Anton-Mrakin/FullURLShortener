@@ -55,8 +55,8 @@ resilience4j:
         register-health-indicator: true
 
 logging:
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n"
+  loki:
+    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
   level:
     org.hibernate.SQL: ERROR
     org.hibernate.type.descriptor.sql.BasicBinder: ERROR
