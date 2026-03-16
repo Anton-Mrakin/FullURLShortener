@@ -46,6 +46,13 @@ resilience4j:
         exponential-backoff-multiplier: 2
         retry-exceptions:
           - org.springframework.orm.ObjectOptimisticLockingFailureException
+  ratelimiter:
+    instances:
+      shortenLimit:
+        limit-for-period: 5
+        limit-refresh-period: 1s
+        timeout-duration: 0ms
+        register-health-indicator: true
 
 logging:
   pattern:

@@ -1,6 +1,7 @@
 package com.mrakin.infra.rest;
 
 import com.mrakin.domain.exception.UrlNotFoundException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,6 +20,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleUrlNotFoundException(UrlNotFoundException ex) {
         log.error("URL not found: {}", ex.getMessage());
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<String> handleRequestNotPermitted(RequestNotPermitted ex) {
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
+        return new ResponseEntity<>("Too many requests - rate limit exceeded", HttpStatus.TOO_MANY_REQUESTS);
     }
 
     @ExceptionHandler(IllegalStateException.class)

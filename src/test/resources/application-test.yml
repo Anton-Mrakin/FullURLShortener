@@ -5,3 +5,12 @@ app:
     shorten-probability: 0.2
     latency-threshold: 300.0
     throughput-threshold: 300.0
+    startup-threshold: 30000.0
+
+resilience4j:
+  ratelimiter:
+    instances:
+      shortenLimit:
+        limit-for-period: 10000
+        limit-refresh-period: 1s
+        timeout-duration: 0ms

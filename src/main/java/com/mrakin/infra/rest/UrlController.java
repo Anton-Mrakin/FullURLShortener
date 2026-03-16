@@ -2,6 +2,7 @@ package com.mrakin.infra.rest;
 
 import com.mrakin.usecases.GetOriginalUrlUseCase;
 import com.mrakin.usecases.ShortenUrlUseCase;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,7 @@ public class UrlController {
     private final GetOriginalUrlUseCase getOriginalUrlUseCase;
 
     @PostMapping("/shorten")
+    @RateLimiter(name = "shortenLimit")
     public ResponseEntity<String> shorten(@RequestBody String originalUrl) {
         var url = shortenUrlUseCase.shorten(originalUrl.trim());
         return ResponseEntity.ok(url.getShortCode());
