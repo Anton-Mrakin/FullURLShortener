@@ -7,4 +7,5 @@ public interface UrlRepositoryPort {
     Url save(Url url);
     Optional<Url> findByShortCode(String shortCode);
     Optional<Url> findByOriginalUrl(String originalUrl);
+    long count();
 }

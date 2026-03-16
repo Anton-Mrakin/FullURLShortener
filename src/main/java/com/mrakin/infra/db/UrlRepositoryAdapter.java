@@ -34,4 +34,9 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
         return jpaUrlRepository.findByOriginalUrl(originalUrl)
                 .map(urlDbMapper::toDomain);
     }
+
+    @Override
+    public long count() {
+        return jpaUrlRepository.count();
+    }
 }

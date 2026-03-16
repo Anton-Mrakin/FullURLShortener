@@ -1,0 +1,10 @@
+app:
+  test:
+    iterations: 1000
+    threads: 1000
+    latency:
+      shorten: 10.0
+      get: 3.0
+    throughput:
+      shorten: 100.0
+      get: 2000.0
