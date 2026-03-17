@@ -31,27 +31,15 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
     }
 
     @Override
-    @Transactional
-    @Retry(name = "dbRetry")
     public Optional<Url> findByShortCode(String shortCode) {
         return jpaUrlRepository.findByShortCode(shortCode)
-                .map(entity -> {
-                    entity.setLastAccessed(LocalDateTime.now());
-                    jpaUrlRepository.save(entity);
-                    return urlDbMapper.toDomain(entity);
-                });
+                .map(urlDbMapper::toDomain);
     }
 
     @Override
-    @Transactional
-    @Retry(name = "dbRetry")
     public Optional<Url> findByOriginalUrl(String originalUrl) {
         return jpaUrlRepository.findByOriginalUrl(originalUrl)
-                .map(entity -> {
-                    entity.setLastAccessed(LocalDateTime.now());
-                    jpaUrlRepository.save(entity);
-                    return urlDbMapper.toDomain(entity);
-                });
+                .map(urlDbMapper::toDomain);
     }
 
     @Override

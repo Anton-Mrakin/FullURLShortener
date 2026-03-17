@@ -65,6 +65,7 @@ class UrlUseCaseTest {
         assertEquals(originalUrl, result.getOriginalUrl());
         assertEquals(expectedShortCode, result.getShortCode());
         verify(urlRepositoryPort).save(any(Url.class));
+        verify(urlRepositoryPort, never()).updateLastAccessed(any());
     }
 
     @Test
@@ -97,6 +98,7 @@ class UrlUseCaseTest {
         Url result = getOriginalUrlUseCase.getOriginal(shortCode);
 
         assertEquals(originalUrl, result.getOriginalUrl());
+        verify(urlRepositoryPort).updateLastAccessed(shortCode);
     }
 
     @Test
@@ -123,5 +125,6 @@ class UrlUseCaseTest {
         assertEquals(code, result.getShortCode());
         verify(urlRepositoryPort).deleteOldest();
         verify(urlRepositoryPort).save(any());
+        verify(urlRepositoryPort, never()).updateLastAccessed(any());
     }
 }

@@ -37,6 +37,7 @@ public class ShortenUrlUseCase {
                 UrlRepositoryPort::count);
     }
 
+    @Transactional
     @Retry(name = "shortenRetry")
     public Url shorten(String originalUrl) {
         shortenCounter.increment();
