@@ -2,19 +2,37 @@ spring:
   application:
     name: flip-url-shortener
   datasource:
-    url: jdbc:postgresql://localhost:5432/shortener
-    username: user
-    password: password
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/shortener
+    username: ${DB_USER:user}
+    password: ${DB_PASSWORD:password}
     hikari:
       transaction-isolation: TRANSACTION_READ_COMMITTED
+      connection-timeout: 5000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      data-source-properties:
+        socketTimeout: 5000
+        connectTimeout: 5000
+        loginTimeout: 5
+        tcpKeepAlive: true
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
     properties:
+      jakarta.persistence.query.timeout: 5000
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
+  task:
+    execution:
+      pool:
+        core-size: 8
+        max-size: 32
+        queue-capacity: 100
+    scheduling:
+      pool:
+        size: 2
   flyway:
     enabled: true
     baseline-on-migrate: true

@@ -42,10 +42,22 @@
         </format>
     </appender>
 
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="CONSOLE" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+    </appender>
+
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_CONSOLE"/>
         <springProfile name="!test">
-            <appender-ref ref="FILE"/>
+            <appender-ref ref="ASYNC_FILE"/>
             <appender-ref ref="LOKI"/>
         </springProfile>
     </root>

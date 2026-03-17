@@ -29,7 +29,7 @@ public class Base62ShortCodeGenerator implements ShortCodeGenerator {
         }
 
         Random random = (seed != null) ? threadLocalRandom.get() : ThreadLocalRandom.current();
-        long randomValue = Math.abs(random.nextLong());
+        long randomValue = random.nextLong() & Long.MAX_VALUE;
         
         return encode(randomValue);
     }
