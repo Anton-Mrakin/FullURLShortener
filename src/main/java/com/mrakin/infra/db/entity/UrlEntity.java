@@ -2,6 +2,8 @@ package com.mrakin.infra.db.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -25,6 +27,9 @@ import lombok.ToString;
 public class UrlEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(name = "short_code", nullable = false, unique = true)
     private String shortCode;
 
