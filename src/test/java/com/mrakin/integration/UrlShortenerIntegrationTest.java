@@ -9,10 +9,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.mrakin.usecases.ShortenUrlUseCase;
+import com.mrakin.usecases.generator.ShortCodeGenerator;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -50,30 +54,29 @@ class UrlShortenerIntegrationTest {
     @Test
     void testRateLimiter() throws Exception {
         RateLimiter rateLimiter = rateLimiterRegistry.rateLimiter("shortenLimit");
-        rateLimiter.changeLimitForPeriod(1);
-        
-        boolean acquired = true;
-        for (int i = 0; i < 50; i++) {
-            if (!rateLimiter.acquirePermission()) {
-                acquired = false;
-                break;
+        try {
+            rateLimiter.changeLimitForPeriod(1);
+            boolean acquired = true;
+            for (int i = 0; i < 50; i++) {
+                if (!rateLimiter.acquirePermission()) {
+                    acquired = false;
+                    break;
+                }
             }
+            if (acquired) {
+                log.warn("Could not exhaust rate limiter permits in testRateLimiter");
+                return;
+            }
+            String originalUrl = "https://example.com/ratelimit";
+            mockMvc.perform(post("/api/v1/urls/shorten")
+                            .contentType(MediaType.TEXT_PLAIN)
+                            .content(originalUrl + "limit"))
+                    .andExpect(status().isTooManyRequests())
+                    .andExpect(content().string(containsString("Too many requests")));
+        } finally {
+            rateLimiter.changeLimitForPeriod(100000);
+            TimeUnit.SECONDS.sleep(1);
         }
-        
-        if (acquired) {
-             log.warn("Could not exhaust rate limiter permits in testRateLimiter");
-             return;
-        }
-
-        String originalUrl = "https://example.com/ratelimit";
-        
-        mockMvc.perform(post("/api/v1/urls/shorten")
-                        .contentType(MediaType.TEXT_PLAIN)
-                        .content(originalUrl + "limit"))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(content().string(containsString("Too many requests")));
-        
-        rateLimiter.changeLimitForPeriod(10000);
     }
 
     @Container
@@ -91,6 +94,12 @@ class UrlShortenerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private com.mrakin.domain.ports.UrlRepositoryPort urlRepositoryPort;
+
+    @Autowired
+    private com.mrakin.infra.db.repository.JpaUrlRepository jpaUrlRepository;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -181,7 +190,7 @@ class UrlShortenerIntegrationTest {
     @Test
     void testConcurrentShorten() throws Exception {
         String originalUrl = "https://concurrent.com/" + UUID.randomUUID();
-        int concurrentThreads = 5;
+        int concurrentThreads = 20;
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch finishLatch = new CountDownLatch(concurrentThreads);
         ExecutorService executor = Executors.newFixedThreadPool(concurrentThreads);
@@ -221,6 +230,36 @@ class UrlShortenerIntegrationTest {
     }
 
     @Test
+    void testUrlLimitAsynchronously() throws Exception {
+        jpaUrlRepository.deleteAll();
+        
+        int smallLimit = 5;
+        // Since it's @Value in Aspect, we can't easily change it here without reflections 
+        // OR we can just use the current limit from application-test.yml
+        // But let's assume limit is 10 for this specific scenario.
+        
+        // I'll use ReflectionTestUtils to set the limit in the Aspect for this test
+        com.mrakin.infra.aspect.UrlLimitAspect aspect = applicationContext.getBean(com.mrakin.infra.aspect.UrlLimitAspect.class);
+        org.springframework.test.util.ReflectionTestUtils.setField(aspect, "urlLimit", (long) smallLimit);
+        
+        for (int i = 0; i < smallLimit + 5; i++) {
+            mockMvc.perform(post("/api/v1/urls/shorten")
+                            .contentType(MediaType.TEXT_PLAIN)
+                            .content("https://limit.com/" + i))
+                    .andExpect(status().isOk());
+        }
+        
+        // Wait a bit for async tasks to complete
+        TimeUnit.MILLISECONDS.sleep(500);
+        
+        long count = urlRepositoryPort.count();
+        assertTrue(count <= smallLimit, "URL count should be within limit after async cleanup. Actual: " + count);
+        
+        // Restore original limit (from config)
+        long originalLimit = applicationContext.getEnvironment().getProperty("app.url-limit", Long.class, 10000L);
+        org.springframework.test.util.ReflectionTestUtils.setField(aspect, "urlLimit", originalLimit);
+    }
+    @Test
     void testUrlValidation() throws Exception {
         // Test empty URL
         mockMvc.perform(post("/api/v1/urls/shorten")
@@ -236,6 +275,47 @@ class UrlShortenerIntegrationTest {
                         .content(longUrl))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(containsString("URL length exceeds maximum limit")));
+    }
+
+    @Test
+    void testShortCodeCollisionRetry() throws Exception {
+        RateLimiter rateLimiter = rateLimiterRegistry.rateLimiter("shortenLimit");
+        rateLimiter.changeLimitForPeriod(100000);
+        
+        ShortCodeGenerator mockGenerator = Mockito.mock(ShortCodeGenerator.class);
+        
+        ShortenUrlUseCase shortenUseCase = applicationContext.getBean(ShortenUrlUseCase.class);
+        ShortCodeGenerator originalGenerator = (ShortCodeGenerator) org.springframework.test.util.ReflectionTestUtils.getField(shortenUseCase, "shortCodeGenerator");
+        
+        try {
+            Mockito.when(mockGenerator.generate(ArgumentMatchers.anyString()))
+                    .thenReturn("duplicate");
+                    
+            org.springframework.test.util.ReflectionTestUtils.setField(shortenUseCase, "shortCodeGenerator", mockGenerator);
+            
+            // 1. Save first URL -> will get shortCode "duplicate"
+            mockMvc.perform(post("/api/v1/urls/shorten")
+                            .contentType(MediaType.TEXT_PLAIN)
+                            .content("https://collision1.com"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string("duplicate"));
+            
+            // 2. Prepare mock for the second URL shorten call.
+            // First attempt: returns "duplicate" -> DB collision -> Retry
+            // Second attempt: returns "unique" -> Success
+            Mockito.when(mockGenerator.generate("https://collision2.com"))
+                    .thenReturn("duplicate")
+                    .thenReturn("unique");
+            
+            mockMvc.perform(post("/api/v1/urls/shorten")
+                            .contentType(MediaType.TEXT_PLAIN)
+                            .content("https://collision2.com"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string("unique"));
+                    
+        } finally {
+            org.springframework.test.util.ReflectionTestUtils.setField(shortenUseCase, "shortCodeGenerator", originalGenerator);
+        }
     }
 
     @Test

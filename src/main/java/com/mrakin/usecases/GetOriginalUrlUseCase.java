@@ -3,13 +3,10 @@ package com.mrakin.usecases;
 import com.mrakin.domain.exception.UrlNotFoundException;
 import com.mrakin.domain.model.Url;
 import com.mrakin.domain.ports.UrlRepositoryPort;
-import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -24,8 +21,6 @@ public class GetOriginalUrlUseCase {
         this.getCounter = meterRegistry.counter("url.get.requests");
     }
 
-    @Transactional
-    @Retry(name = "dbRetry")
     public Url getOriginal(String shortCode) {
         getCounter.increment();
         log.info("Retrieving original URL for short code: {}", shortCode);

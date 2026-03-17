@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +48,7 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
 
     @Override
     @Transactional
+    @Retry(name = "dbRetry")
     public void deleteOldest() {
         jpaUrlRepository.findFirstByOrderByLastAccessedAsc()
                 .ifPresent(jpaUrlRepository::delete);

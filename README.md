@@ -13,11 +13,14 @@ A high-performance, scalable URL shortener service built with Spring Boot 3, fol
 - **High Performance**: Optimized for high concurrency with parallel processing, optimistic locking, and metrics.
 - **Resilience**:
   - **Rate Limiting**: Protects the shortening endpoint using Resilience4j.
-  - **Optimistic Locking**: Ensures data consistency with automatic exponential backoff retries (Resilience4j) on conflicts.
-  - **Data Integrity**: Handles concurrent creation of the same URL or code collisions via Retry policies.
+  - **Optimistic Locking**: Ensures data consistency with automatic exponential backoff retries (Resilience4j) on conflicts (ObjectOptimisticLockingFailureException).
+  - **Data Integrity**: Handles concurrent creation of the same URL or code collisions via Retry policies. If a duplicate `original_url` or `short_code` is detected during save, the operation is retried.
+- **Transaction & Isolation**:
+  - **Global Isolation Level**: `TRANSACTION_READ_COMMITTED` (configured via HikariCP).
+  - **Optimized Flow**: Checking for existing URLs (`findByOriginalUrl`) is performed outside of transactions. Transactions are only used for the actual saving of new records, reducing lock duration.
 - **Storage Management**:
   - Configurable URL limit (`app.url-limit`).
-  - Automatic LRU (Least Recently Used) eviction policy: when the limit is reached, the oldest record based on `lastAccessed` is removed.
+  - **Asynchronous LRU Eviction**: When the limit is reached, an asynchronous task (`UrlLimitAspect`) handles the deletion of the oldest record (based on `lastAccessed`). This ensures that the primary request flow is not delayed by storage maintenance.
 - **Input Validation**:
   - **NotEmpty**: Ensures the URL is not null or empty.
   - **MaxLength**: Enforces a configurable maximum URL length (`app.max-url-length`).

@@ -50,7 +50,7 @@ class UrlUseCaseTest {
     void setUp() {
         when(meterRegistry.counter(any())).thenReturn(counter);
         urlValidators = List.of(new NotEmptyUrlValidator(), new MaxLengthUrlValidator(2048));
-        shortenUrlUseCase = new ShortenUrlUseCase(urlRepositoryPort, shortCodeGenerator, urlValidators, meterRegistry, 10000L);
+        shortenUrlUseCase = new ShortenUrlUseCase(urlRepositoryPort, shortCodeGenerator, urlValidators, meterRegistry);
         getOriginalUrlUseCase = new GetOriginalUrlUseCase(urlRepositoryPort, meterRegistry);
     }
 
@@ -115,24 +115,6 @@ class UrlUseCaseTest {
         assertThrows(UrlNotFoundException.class, () -> getOriginalUrlUseCase.getOriginal(shortCode));
     }
 
-    @Test
-    void shorten_LimitReached_ShouldDeleteOldestAndSave() {
-        String url = "https://example.com";
-        String code = "short123";
-        shortenUrlUseCase = new ShortenUrlUseCase(urlRepositoryPort, shortCodeGenerator, urlValidators, meterRegistry, 5L);
-        when(urlRepositoryPort.findByOriginalUrl(url)).thenReturn(Optional.empty());
-        when(urlRepositoryPort.count()).thenReturn(5L);
-        when(shortCodeGenerator.generate(url)).thenReturn(code);
-        when(urlRepositoryPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Url result = shortenUrlUseCase.shorten(url);
-
-        assertNotNull(result);
-        assertEquals(code, result.getShortCode());
-        verify(urlRepositoryPort).deleteOldest();
-        verify(urlRepositoryPort).save(any());
-        verify(urlRepositoryPort, never()).updateLastAccessed(any());
-    }
 
     @Test
     void shorten_EmptyUrl_ShouldThrowValidationException() {

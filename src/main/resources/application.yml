@@ -5,6 +5,8 @@ spring:
     url: jdbc:postgresql://localhost:5432/shortener
     username: user
     password: password
+    hikari:
+      transaction-isolation: TRANSACTION_READ_COMMITTED
   jpa:
     hibernate:
       ddl-auto: validate

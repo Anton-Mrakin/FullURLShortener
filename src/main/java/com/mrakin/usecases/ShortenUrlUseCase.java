@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -22,41 +21,30 @@ public class ShortenUrlUseCase {
     private final UrlRepositoryPort urlRepositoryPort;
     private final ShortCodeGenerator shortCodeGenerator;
     private final List<UrlValidator> urlValidators;
-    private final long urlLimit;
     private final Counter shortenCounter;
 
     public ShortenUrlUseCase(UrlRepositoryPort urlRepositoryPort,
                              @Qualifier("selectedShortCodeGenerator")
                              ShortCodeGenerator shortCodeGenerator,
                              List<UrlValidator> urlValidators,
-                             MeterRegistry meterRegistry,
-                             @Value("${app.url-limit:10000}")
-                             long urlLimit) {
+                             MeterRegistry meterRegistry) {
         this.urlRepositoryPort = urlRepositoryPort;
         this.shortCodeGenerator = shortCodeGenerator;
         this.urlValidators = urlValidators;
-        this.urlLimit = urlLimit;
         this.shortenCounter = meterRegistry.counter("url.shorten.requests");
-        
-        meterRegistry.gauge("url.count", urlRepositoryPort, 
+
+        meterRegistry.gauge("url.count", urlRepositoryPort,
                 UrlRepositoryPort::count);
     }
 
-    @Transactional
     @Retry(name = "shortenRetry")
     public Url shorten(String originalUrl) {
         urlValidators.forEach(v -> v.validate(originalUrl));
         shortenCounter.increment();
         log.info("Shortening URL: {}", originalUrl);
-        
+
         return urlRepositoryPort.findByOriginalUrl(originalUrl)
                 .orElseGet(() -> {
-                    long currentCount = urlRepositoryPort.count();
-                    if (currentCount >= urlLimit) {
-                        log.warn("URL limit reached: {}. Deleting oldest entry.", urlLimit);
-                        urlRepositoryPort.deleteOldest();
-                    }
-                    
                     String shortCode = shortCodeGenerator.generate(originalUrl);
                     Url url = Url.builder()
                             .originalUrl(originalUrl)
