@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.Map;
@@ -19,6 +20,7 @@ import java.util.Map;
 @SpringBootApplication
 @EnableTransactionManagement
 @EnableAsync
+@EnableScheduling
 public class FlipUrlShortenerApplication {
 
     public static void main(String[] args) {

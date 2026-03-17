@@ -23,6 +23,8 @@ app:
   url-limit: 10000
   short-code-length: 8
   max-url-length: 2048
+  maintenance:
+    rate: PT1M
   generator:
     name: base62Generator
 

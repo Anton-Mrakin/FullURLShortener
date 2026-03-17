@@ -252,7 +252,7 @@ class UrlShortenerIntegrationTest {
         // Wait a bit for async tasks to complete
         TimeUnit.MILLISECONDS.sleep(500);
         
-        long count = urlRepositoryPort.count();
+        long count = jpaUrlRepository.count();
         assertTrue(count <= smallLimit, "URL count should be within limit after async cleanup. Actual: " + count);
         
         // Restore original limit (from config)

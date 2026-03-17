@@ -20,7 +20,8 @@ A high-performance, scalable URL shortener service built with Spring Boot 3, fol
   - **Optimized Flow**: Checking for existing URLs (`findByOriginalUrl`) is performed outside of transactions. Transactions are only used for the actual saving of new records, reducing lock duration.
 - **Storage Management**:
   - Configurable URL limit (`app.url-limit`).
-  - **Asynchronous LRU Eviction**: When the limit is reached, an asynchronous task (`UrlLimitAspect`) handles the deletion of the oldest record (based on `lastAccessed`). This ensures that the primary request flow is not delayed by storage maintenance.
+  - **Asynchronous LRU Eviction**: When the limit is reached, an asynchronous task (`UrlLimitAspect`) handles the deletion of records exceeding the limit (based on `lastAccessed`).
+  - **Periodic Maintenance**: A scheduled task (`UrlMaintenanceService`) runs every minute (`PT1M`) as a safeguard to ensure the storage limit is maintained, even if asynchronous cleanup fails. Both tasks have a 60-second timeout to prevent hanging.
 - **Input Validation**:
   - **NotEmpty**: Ensures the URL is not null or empty.
   - **MaxLength**: Enforces a configurable maximum URL length (`app.max-url-length`).
