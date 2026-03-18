@@ -7,20 +7,23 @@ spring:
     password: ${DB_PASSWORD:password}
     hikari:
       transaction-isolation: TRANSACTION_READ_COMMITTED
+      maximum-pool-size: 10
       connection-timeout: 5000
       idle-timeout: 600000
       max-lifetime: 1800000
       data-source-properties:
-        socketTimeout: 5000
-        connectTimeout: 5000
-        loginTimeout: 5
+        connectTimeout: 60
+        loginTimeout: 60
+        socketTimeout: 70
+        cancelSignalTimeout: 10
         tcpKeepAlive: true
+        queryTimeout: 60
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
     properties:
-      jakarta.persistence.query.timeout: 5000
+      jakarta.persistence.query.timeout: 60000
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
