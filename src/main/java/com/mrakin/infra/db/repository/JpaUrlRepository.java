@@ -16,6 +16,10 @@ public interface JpaUrlRepository extends JpaRepository<UrlEntity, Long> {
     Optional<UrlEntity> findByOriginalUrl(String originalUrl);
 
     @Modifying
+    @Query(value = "select pg_advisory_xact_lock(:key)", nativeQuery = true)
+    boolean lock(@Param("key") long key);
+
+    @Modifying
     @Query(value = "DELETE FROM urls WHERE id IN (SELECT id FROM urls ORDER BY last_accessed DESC OFFSET :urlLimit ROWS)", nativeQuery = true)
     int deleteOldestRecords(@Param("urlLimit") long urlLimit);
 }

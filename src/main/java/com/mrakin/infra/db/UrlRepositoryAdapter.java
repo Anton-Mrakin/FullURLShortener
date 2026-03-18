@@ -10,6 +10,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.core.instrument.MeterRegistry;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +52,7 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
     @Override
     @Transactional(timeout = 60)
     @Retry(name = "dbRetry")
+    @SchedulerLock(name = "cleanupShortUrls", lockAtMostFor = "1m", lockAtLeastFor = "10s")
     public long deleteOldest(long urlLimit) {
         return jpaUrlRepository.deleteOldestRecords(urlLimit);
     }

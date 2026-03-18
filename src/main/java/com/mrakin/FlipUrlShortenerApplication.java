@@ -1,6 +1,7 @@
 package com.mrakin;
 
 import com.mrakin.usecases.generator.ShortCodeGenerator;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,6 +20,7 @@ import java.util.Map;
 @EnableTransactionManagement
 @EnableAsync
 @EnableScheduling
+@EnableSchedulerLock(defaultLockAtMostFor = "1m")
 public class FlipUrlShortenerApplication {
     public static void main(String[] args) {
         SpringApplication.run(FlipUrlShortenerApplication.class, args);
