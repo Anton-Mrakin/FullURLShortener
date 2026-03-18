@@ -1,6 +1,8 @@
 package com.mrakin;
 
 import com.mrakin.usecases.generator.ShortCodeGenerator;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -14,6 +16,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import javax.sql.DataSource;
 import java.util.Map;
 
 @SpringBootApplication
@@ -60,5 +63,10 @@ public class FlipUrlShortenerApplication {
         executor.setThreadNamePrefix("cleanup-worker-");
         executor.initialize();
         return executor;
+    }
+
+    @Bean
+    public LockProvider lockProvider(DataSource dataSource) {
+        return new JdbcTemplateLockProvider(dataSource);
     }
 }
