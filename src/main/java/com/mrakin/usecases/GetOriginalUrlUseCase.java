@@ -8,6 +8,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -22,6 +23,8 @@ public class GetOriginalUrlUseCase {
         this.getCounter = meterRegistry.counter("url.get.requests");
     }
 
+    @Transactional
+    @UrlAccessedKafkaEvent(key = "#shortCode")
     @Cacheable(value = "urls", key = "#shortCode")
     public Url getOriginal(String shortCode) {
         getCounter.increment();
