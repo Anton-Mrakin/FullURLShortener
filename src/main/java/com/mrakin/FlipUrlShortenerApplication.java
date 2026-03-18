@@ -7,6 +7,7 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.TaskScheduler;
@@ -20,6 +21,7 @@ import javax.sql.DataSource;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
+@EnableCaching
 @SpringBootApplication
 @EnableTransactionManagement
 @EnableAsync
@@ -49,7 +51,7 @@ public class FlipUrlShortenerApplication {
     @Bean
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(2);
+        scheduler.setPoolSize(20);
         scheduler.setThreadNamePrefix("scheduled-task-");
         scheduler.initialize();
         return scheduler;
@@ -60,7 +62,7 @@ public class FlipUrlShortenerApplication {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(8);
         executor.setMaxPoolSize(21);
-        executor.setQueueCapacity(200);
+        executor.setQueueCapacity(20000);
         executor.setThreadNamePrefix("cleanup-action-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         executor.initialize();

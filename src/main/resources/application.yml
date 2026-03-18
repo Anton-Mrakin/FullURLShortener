@@ -7,7 +7,7 @@ spring:
     password: ${DB_PASSWORD:password}
     hikari:
       transaction-isolation: TRANSACTION_READ_COMMITTED
-      maximum-pool-size: 10
+      maximum-pool-size: 100
       connection-timeout: 5000
       idle-timeout: 600000
       max-lifetime: 1800000
@@ -39,6 +39,15 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1h
+      cache-null-values: false
 
 app:
   url-limit: 10000
@@ -86,8 +95,8 @@ resilience4j:
   ratelimiter:
     instances:
       shortenLimit:
-        limit-for-period: 5
-        limit-refresh-period: 1s
+        limit-for-period: 10000
+        limit-refresh-period: 3s
         timeout-duration: 0ms
         register-health-indicator: true
 

@@ -6,6 +6,7 @@ import com.mrakin.domain.ports.UrlRepositoryPort;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -21,6 +22,7 @@ public class GetOriginalUrlUseCase {
         this.getCounter = meterRegistry.counter("url.get.requests");
     }
 
+    @Cacheable(value = "urls", key = "#shortCode")
     public Url getOriginal(String shortCode) {
         getCounter.increment();
         log.info("Retrieving original URL for short code: {}", shortCode);

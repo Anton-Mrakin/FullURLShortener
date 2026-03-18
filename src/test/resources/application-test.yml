@@ -1,5 +1,13 @@
+spring:
+  cache:
+    type: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 app:
-  url-limit: 10000
+  url-limit: 100000
   short-code-length: 8
   maintenance:
     rate: P1D
@@ -7,8 +15,8 @@ app:
     iterations: 1000
     threads: 100
     shorten-probability: 0.2
-    latency-threshold: 300.0
-    throughput-threshold: 300.0
+    latency-threshold: 1000.0
+    throughput-threshold: 100.0
     startup-threshold: 30000.0
 
 resilience4j:

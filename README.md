@@ -114,3 +114,7 @@ Key properties in `application.yml`:
 - `app.generator.name`: Selected generator (`sha256Generator`, `randomStringGenerator`, `base62Generator`).
 - `app.short-code-length`: Length of codes.
 - `logging.loki.url`: URL for Grafana Loki.
+
+
+Performance Results
+Avg Latency = 433.41565 ms, Throughput = 2260.7044355021026 req/sec
