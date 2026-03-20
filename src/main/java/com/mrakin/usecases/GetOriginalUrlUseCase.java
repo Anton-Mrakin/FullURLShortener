@@ -3,6 +3,8 @@ package com.mrakin.usecases;
 import com.mrakin.domain.exception.UrlNotFoundException;
 import com.mrakin.domain.model.Url;
 import com.mrakin.domain.ports.UrlRepositoryPort;
+import com.mrakin.usecases.UrlAccessedKafkaEvent;
+import com.mrakin.usecases.UrlAccessedClickHouseEvent;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ public class GetOriginalUrlUseCase {
 
     @Transactional
     @UrlAccessedKafkaEvent(key = "#shortCode")
+    @UrlAccessedClickHouseEvent(shortCode = "#shortCode")
     @Cacheable(value = "urls", key = "#shortCode")
     public Url getOriginal(String shortCode) {
         getCounter.increment();

@@ -67,6 +67,11 @@ spring:
       time-to-live: 1h
       cache-null-values: false
 
+clickhouse:
+  url: ${CLICKHOUSE_URL:jdbc:clickhouse:http://localhost:8123/default}
+  user: ${CLICKHOUSE_USER:default}
+  password: ${CLICKHOUSE_PASSWORD:}
+
 app:
   url-limit: 10000
   short-code-length: 8
